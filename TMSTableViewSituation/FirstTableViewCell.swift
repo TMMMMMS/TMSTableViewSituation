@@ -37,11 +37,21 @@ class FirstTableViewCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+    @objc private func refreshModel(notification:Notification) {
+        
+        let userInfo = notification.userInfo
+        
+        let model = userInfo!["model"] as! FirstModel
+        
+        if model.identifier == self.model?.identifier {
+            setupCell(model: model)
+        }
+    }
+    
     func setupCell(model : FirstModel) {
         
         self.model = model
         self.countDownNotification()
-        countdownLabel.text = self.model!.countdownFinished ? "开奖中" : String(format: "%02d:%02d:%02d", model.interVal/3600, (model.interVal/60)%60, model.interVal%60)
     }
 
     @objc private func countDownNotification() {

@@ -12,7 +12,7 @@ import SnapKit
 let OYMultipleTableSource1 = "OYMultipleTableSource1"
 let OYMultipleTableSource2 = "OYMultipleTableSource2"
 
-let countdownSecond = 10
+let countdownSecond = 7
 
 class FirstViewController: UIViewController {
 
@@ -107,8 +107,12 @@ extension FirstViewController : FirstTableViewCellDelegate {
             self.dataSource[existIndex] = model
             tableView.reloadData()
         }
-     
-        countdownStart(identifier: model.identifier)
+
+        if model.identifier == OYMultipleTableSource1 {
+            countdownStart1()
+        } else {
+            countdownStart2()
+        }
     }
 }
 
@@ -128,11 +132,11 @@ extension FirstViewController : UITableViewDelegate {
 }
 
 // MARK: - Private
-extension FirstViewController {
+extension FirstViewController { // 这里创建的多个倒计时也可以使用该三方库去维护
     
-    func countdownStart(identifier:String) {
+    func countdownStart1() {
         
-        print(String(format: "%@开启倒计时,%zds后模拟请求接口刷新倒计时时间", identifier, countdownSecond))
+        print(String(format: "OYMultipleTableSource1开启倒计时,%zds后模拟请求接口刷新倒计时时间", countdownSecond))
         
         weak var WeakSelf = self
         
@@ -150,7 +154,62 @@ extension FirstViewController {
                         
                         for index in 0..<WeakSelf!.dataSource.count {
                             let model = WeakSelf!.dataSource[index]
-                            if model.identifier == identifier {
+                            if model.identifier == OYMultipleTableSource1 {
+                                existIndex = index
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if existIndex >= 0 {
+                        
+                        let model = self.dataSource[existIndex]
+                        model.interVal = Int(arc4random() % 60)
+                        model.countdownFinished = false
+
+                        OYCountDownManager.sharedManager.reloadSourceWithIdentifier(identifier: OYMultipleTableSource1)
+                        
+                        WeakSelf?.tableView.reloadData()
+                        
+                        if WeakSelf!.detailVC != nil {
+                            
+                            WeakSelf!.detailVC?.updateVc(model: model)
+                        }
+                    }
+                    
+                }
+                WeakSelf?.timer1!.cancel()
+            }
+        }
+        if #available(iOS 10.0, *) {
+            timer.activate()
+        } else {
+            timer.resume()
+        }
+        timer1 = timer
+    }
+    
+    func countdownStart2() {
+        
+        print(String(format: "OYMultipleTableSource2开启倒计时,%zds后模拟请求接口刷新倒计时时间", countdownSecond))
+        
+        weak var WeakSelf = self
+        
+        var timeout = countdownSecond
+        let queue = DispatchQueue.global()
+        let timer = DispatchSource.makeTimerSource(flags: .init(rawValue: 0), queue: queue)
+        timer.schedule(deadline: .now(), repeating:  .milliseconds(1000))
+        timer.setEventHandler {
+            timeout = timeout - 1
+            if timeout < 0 {
+                DispatchQueue.main.async {
+                    
+                    var existIndex = -1
+                    if WeakSelf!.dataSource.count > 0 {
+                        
+                        for index in 0..<WeakSelf!.dataSource.count {
+                            let model = WeakSelf!.dataSource[index]
+                            if model.identifier == OYMultipleTableSource2 {
                                 existIndex = index
                                 break;
                             }
@@ -159,25 +218,21 @@ extension FirstViewController {
                     
                     if existIndex >= 0 {
                         let model = self.dataSource[existIndex]
-                        model.interVal = Int(arc4random() % 100)
+                        model.interVal = Int(arc4random() % 60)
                         model.countdownFinished = false
+                        OYCountDownManager.sharedManager.reloadSourceWithIdentifier(identifier: OYMultipleTableSource2)
                         
+                        WeakSelf?.tableView.reloadData()
                         
                         if WeakSelf!.detailVC != nil {
+                            
                             WeakSelf!.detailVC?.updateVc(model: model)
                         }
                     }
                     
-                    OYCountDownManager.sharedManager.reloadSourceWithIdentifier(identifier: identifier)
-                    
-                    WeakSelf?.tableView.reloadData()
                     
                 }
-                if identifier == OYMultipleTableSource1 {
-                    WeakSelf?.timer1!.cancel()
-                } else {
-                    WeakSelf?.timer2!.cancel()
-                }
+                WeakSelf?.timer2!.cancel()
             }
         }
         if #available(iOS 10.0, *) {
@@ -185,11 +240,7 @@ extension FirstViewController {
         } else {
             timer.resume()
         }
-        if identifier == OYMultipleTableSource1 {
-            timer1 = timer
-        } else {
-            timer2 = timer
-        }
+        timer2 = timer
     }
 }
 
@@ -227,7 +278,7 @@ extension FirstViewController {
             
             let model = FirstModel.init()
             model.identifier = index == 0 ? OYMultipleTableSource1 : OYMultipleTableSource2
-            model.interVal = Int(arc4random() % 100)
+            model.interVal = Int(arc4random() % 15)
             model.countdownFinished = false
             dataSource.append(model)
             
@@ -235,4 +286,14 @@ extension FirstViewController {
         }
     }
     
+    private func getModel(identifier:String) -> FirstModel? {
+        
+        for index in 0..<self.dataSource.count {
+            let model = self.dataSource[index]
+            if model.identifier == identifier {
+                return model
+            }
+        }
+        return nil
+    }
 }

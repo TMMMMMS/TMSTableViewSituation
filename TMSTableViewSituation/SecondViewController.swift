@@ -61,6 +61,9 @@ class SecondViewController: UIViewController {
         let timeInterval = OYCountDownManager.sharedManager.timeIntervalWithIdentifier(identifier: self.model!.identifier)
 
         let countDown = self.model!.interVal - timeInterval
+        
+//        print(self.model!.identifier+":"+"\(self.model!.interVal)" + "--" + "\(timeInterval)")
+        
         if countDown <= 0 { // 倒计时结束时回调
             countdownLabel?.text = "开奖中"
         } else {
